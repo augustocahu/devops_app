@@ -1,0 +1,75 @@
+
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: devops_demo_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: devops_user
+      POSTGRES_PASSWORD: devops_password
+      POSTGRES_DB: devops_demo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - devops_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devops_user -d devops_demo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Aplicação Web (Frontend + Backend)
+  app:
+    build: .
+    container_name: devops_demo_app
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://devops_user:devops_password@postgres:5432/devops_demo?schema=public"
+      NODE_ENV: production
+      NEXT_TELEMETRY_DISABLED: 1
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - devops_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Nginx como proxy reverso (opcional, para produção)
+  nginx:
+    image: nginx:alpine
+    container_name: devops_demo_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - app
+    networks:
+      - devops_network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  devops_network:
+    driver: bridge

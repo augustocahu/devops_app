@@ -1,0 +1,37 @@
+
+{
+  "name": "devops-demo-app",
+  "version": "1.0.0",
+  "description": "Aplicação completa para demonstração DevOps com frontend React, backend API, banco PostgreSQL e containerização Docker",
+  "type": "devops-demo",
+  "technologies": {
+    "frontend": ["React 18", "NextJS 14", "TypeScript", "Tailwind CSS", "Shadcn/UI"],
+    "backend": ["NextJS API Routes", "Prisma ORM", "PostgreSQL"],
+    "devops": ["Docker", "Docker Compose", "Nginx", "Multi-stage builds"],
+    "tools": ["Yarn", "ESLint", "Prettier", "Framer Motion"]
+  },
+  "features": [
+    "CRUD completo para tarefas e usuários",
+    "API REST com operações completas",
+    "Interface responsiva e moderna",
+    "Dashboard com estatísticas em tempo real",
+    "Containerização Docker completa",
+    "Docker Compose para orquestração",
+    "Configuração para desenvolvimento e produção",
+    "Health checks e monitoramento",
+    "Proxy reverso com Nginx",
+    "Banco PostgreSQL com persistência"
+  ],
+  "endpoints": {
+    "app": "http://localhost:3000",
+    "nginx": "http://localhost:80",
+    "database": "postgresql://devops_user:devops_password@localhost:5432/devops_demo"
+  },
+  "commands": {
+    "development": "cd app && yarn dev",
+    "docker-dev": "docker-compose -f docker-compose.dev.yml up -d",
+    "docker-prod": "docker-compose up --build -d",
+    "setup": "./setup.sh",
+    "deploy": "./deploy.sh"
+  }
+}

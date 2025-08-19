@@ -1,0 +1,54 @@
+
+version: '3.8'
+
+services:
+  # Banco de dados PostgreSQL para desenvolvimento
+  postgres:
+    image: postgres:15-alpine
+    container_name: devops_demo_postgres_dev
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: devops_user
+      POSTGRES_PASSWORD: devops_password
+      POSTGRES_DB: devops_demo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+    networks:
+      - devops_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U devops_user -d devops_demo"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Aplicação em modo desenvolvimento
+  app_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: devops_demo_app_dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://devops_user:devops_password@postgres:5432/devops_demo?schema=public"
+      NODE_ENV: development
+    volumes:
+      - ./app:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - devops_network
+
+volumes:
+  postgres_dev_data:
+    driver: local
+
+networks:
+  devops_network:
+    driver: bridge

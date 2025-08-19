@@ -1,0 +1,20 @@
+
+# Dockerfile para desenvolvimento
+FROM node:18-alpine
+
+WORKDIR /app
+
+RUN apk add --no-cache libc6-compat
+
+# Copiar package.json e instalar dependências
+COPY app/package.json app/yarn.lock* ./
+RUN yarn install --frozen-lockfile
+
+# Copiar código fonte
+COPY app .
+
+# Expor porta
+EXPOSE 3000
+
+# Comando para desenvolvimento
+CMD ["yarn", "dev"]
