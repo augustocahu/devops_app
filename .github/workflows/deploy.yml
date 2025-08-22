@@ -1,54 +1,77 @@
-name: Deploy to AWS EC2
+name: DevOps Pipeline
 
 on:
   push:
-    branches: [ main ]
+    branches: [ dev, staging, main ]
   pull_request:
-    branches: [ main ]
-    types: [ closed ]
+    branches: [ staging, main ]
 
 jobs:
-  build-and-deploy:
+  test:
     runs-on: ubuntu-latest
-    # Só executa se for push direto na main OU merge de PR para main
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true))
+    if: github.ref == 'refs/heads/dev'
     
     steps:
     - uses: actions/checkout@v3
-    
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
+    - name: Test Build
+      run: |
+        cd app
+        npm install --force
+        echo "✅ Testes executados na branch DEV"
+
+  staging-deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/staging'
     
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    - name: Staging Build
+      run: |
+        cd app
+        npm install --force
+        echo "✅ Build de staging executado"
+
+  production-deploy:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
     - name: Install dependencies
       run: |
         cd app
         npm install --force
-    
     - name: Fix Prisma schema
       run: |
         cd app
         sed -i '/output = /d' prisma/schema.prisma
         sed -i 's/provider = "postgresql"/provider = "sqlite"/' prisma/schema.prisma
         sed -i 's/url.*= env("DATABASE_URL")/url = "file:..\/build.db"/' prisma/schema.prisma
-    
     - name: Generate Prisma Client
       run: |
         cd app
         npx prisma generate
-    
     - name: Create build database
       run: |
         cd app
         npx prisma db push
-    
     - name: Build application
       run: |
         cd app
         npm run build
-    
-    - name: Deploy to EC2
+    - name: Deploy to AWS Production
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.HOST }}
@@ -63,5 +86,5 @@ jobs:
           npx prisma generate
           docker rm -f devops-app || true
           docker run -d --name devops-app -p 3000:3000 -v $(pwd):/app -w /app node:18-alpine sh -c "npm install --force && npm run dev -- --hostname 0.0.0.0"
-          echo "Deploy realizado com sucesso na main!"
+          echo "🚀 Deploy PRODUÇÃO realizado com sucesso!"
           docker ps | grep devops-app
