@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     
     steps:
@@ -21,21 +21,22 @@ jobs:
         cd app
         npm install --force
     
-    - name: Fix Prisma schema
+    - name: Fix Prisma schema for build
       run: |
         cd app
         sed -i '/output = /d' prisma/schema.prisma
+        sed -i 's/provider = "postgresql"/provider = "sqlite"/' prisma/schema.prisma
+        sed -i 's/url.*= env("DATABASE_URL")/url = "file:..\/build.db"/' prisma/schema.prisma
     
     - name: Generate Prisma Client
       run: |
         cd app
         npx prisma generate
     
-    - name: Create dummy database for build
+    - name: Create build database
       run: |
         cd app
-        echo "DATABASE_URL=file:./build.db" > .env.local
-        npx prisma db push --force-reset
+        npx prisma db push
     
     - name: Build application
       run: |
