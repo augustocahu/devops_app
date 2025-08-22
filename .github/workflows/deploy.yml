@@ -21,6 +21,12 @@ jobs:
         cd app
         npm install --force
     
+    - name: Fix Prisma schema
+      run: |
+        cd app
+        sed -i '/output = /d' prisma/schema.prisma
+        cat prisma/schema.prisma
+    
     - name: Generate Prisma Client
       run: |
         cd app
@@ -42,6 +48,7 @@ jobs:
           git pull origin main
           cd app
           npm install --force
+          sed -i '/output = /d' prisma/schema.prisma
           npx prisma generate
           npm run build
           docker rm -f devops-app
