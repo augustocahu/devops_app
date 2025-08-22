@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
@@ -21,7 +21,7 @@ jobs:
         cd app
         npm install --force
     
-    - name: Fix Prisma schema for build
+    - name: Fix Prisma schema
       run: |
         cd app
         sed -i '/output = /d' prisma/schema.prisma
@@ -56,6 +56,6 @@ jobs:
           npm install --force
           sed -i '/output = /d' prisma/schema.prisma
           npx prisma generate
-          docker rm -f devops-app
+          docker rm -f devops-app || true
           docker run -d --name devops-app -p 3000:3000 -v $(pwd):/app -w /app node:18-alpine sh -c "npm install --force && npm run dev -- --hostname 0.0.0.0"
           echo "Deploy realizado com sucesso!"
