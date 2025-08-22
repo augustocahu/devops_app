@@ -25,12 +25,17 @@ jobs:
       run: |
         cd app
         sed -i '/output = /d' prisma/schema.prisma
-        cat prisma/schema.prisma
     
     - name: Generate Prisma Client
       run: |
         cd app
         npx prisma generate
+    
+    - name: Create dummy database for build
+      run: |
+        cd app
+        echo "DATABASE_URL=file:./build.db" > .env.local
+        npx prisma db push --force-reset
     
     - name: Build application
       run: |
@@ -50,7 +55,6 @@ jobs:
           npm install --force
           sed -i '/output = /d' prisma/schema.prisma
           npx prisma generate
-          npm run build
           docker rm -f devops-app
-          docker run -d --name devops-app -p 3000:3000 -v $(pwd):/app -w /app node:18-alpine sh -c "npm run start"
+          docker run -d --name devops-app -p 3000:3000 -v $(pwd):/app -w /app node:18-alpine sh -c "npm install --force && npm run dev -- --hostname 0.0.0.0"
           echo "Deploy realizado com sucesso!"
