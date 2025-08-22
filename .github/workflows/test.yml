@@ -1,0 +1,48 @@
+name: Test Build
+
+on:
+  push:
+    branches-ignore: [ main ]
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Install dependencies
+      run: |
+        cd app
+        npm install --force
+    
+    - name: Fix Prisma schema for test
+      run: |
+        cd app
+        sed -i '/output = /d' prisma/schema.prisma
+        sed -i 's/provider = "postgresql"/provider = "sqlite"/' prisma/schema.prisma
+        sed -i 's/url.*= env("DATABASE_URL")/url = "file:..\/test.db"/' prisma/schema.prisma
+    
+    - name: Generate Prisma Client
+      run: |
+        cd app
+        npx prisma generate
+    
+    - name: Create test database
+      run: |
+        cd app
+        npx prisma db push
+    
+    - name: Test build
+      run: |
+        cd app
+        npm run build
+        echo "✅ Build testado com sucesso na branch $(echo $GITHUB_REF | cut -d'/' -f3)!"
