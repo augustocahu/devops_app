@@ -5,7 +5,7 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
+  build-and-deploy:
     runs-on: ubuntu-latest
     
     steps:
@@ -21,9 +21,29 @@ jobs:
         cd app
         npm install --force
     
-    - name: Test application
+    - name: Generate Prisma Client
       run: |
         cd app
-        echo "Application dependencies installed successfully!"
-        echo "Project structure:"
-        ls -la
+        npx prisma generate
+    
+    - name: Build application
+      run: |
+        cd app
+        npm run build
+    
+    - name: Deploy to EC2
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.PRIVATE_KEY }}
+        script: |
+          cd ~/devops_app
+          git pull origin main
+          cd app
+          npm install --force
+          npx prisma generate
+          npm run build
+          docker rm -f devops-app
+          docker run -d --name devops-app -p 3000:3000 -v $(pwd):/app -w /app node:18-alpine sh -c "npm run start"
+          echo "Deploy realizado com sucesso!"
