@@ -27,7 +27,7 @@ export default function HomePage() {
       <div className="text-center space-y-4 py-8">
         <div className="flex items-center justify-center space-x-2 mb-4">
           <Zap className="h-8 w-8 text-blue-600" />
-          <h1 className="text-4xl font-bold text-gray-900">Sistema de gerenciamento</h1>
+          <h1 className="text-4xl font-bold text-gray-900">Sistema para disciplina de devops</h1>
         </div>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           Sistema completo de gerenciamento com operações CRUD, containerização Docker e pipeline CI/CD
